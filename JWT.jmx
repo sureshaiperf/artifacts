@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.5">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <kg.apc.jmeter.samplers.DummySampler guiclass="kg.apc.jmeter.samplers.DummySamplerGui" testclass="kg.apc.jmeter.samplers.DummySampler" testname="JWT Encode" enabled="true">
+          <boolProp name="WAITING">true</boolProp>
+          <boolProp name="SUCCESFULL">true</boolProp>
+          <stringProp name="RESPONSE_CODE">200</stringProp>
+          <stringProp name="RESPONSE_MESSAGE">OK</stringProp>
+          <stringProp name="REQUEST_DATA">Dummy Sampler used to simulate requests and responses
+without actual network activity. This helps debugging tests.</stringProp>
+          <stringProp name="RESPONSE_DATA">${jwt_token}</stringProp>
+          <stringProp name="RESPONSE_TIME">${__Random(50,500)}</stringProp>
+          <stringProp name="LATENCY">${__Random(1,50)}</stringProp>
+          <stringProp name="CONNECT">${__Random(1,5)}</stringProp>
+          <stringProp name="URL"></stringProp>
+          <stringProp name="RESULT_CLASS">org.apache.jmeter.samplers.SampleResult</stringProp>
+        </kg.apc.jmeter.samplers.DummySampler>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="true">
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">import java.security.KeyFactory
+import java.security.PrivateKey
+import java.security.spec.PKCS8EncodedKeySpec
+import java.util.Base64
+import java.security.Signature
+
+// Helper function to perform Base64 URL encoding
+def base64UrlEncode(byte[] input) {
+    String base64 = Base64.getEncoder().encodeToString(input)
+    return base64.replace(&apos;+&apos;, &apos;-&apos;).replace(&apos;/&apos;, &apos;_&apos;).replace(&apos;=&apos;, &apos;&apos;)
+}
+
+// Helper function to perform JWT encoding
+def createJwt(header, payload, privateKey) {
+    // Encode header and payload in Base64 URL
+    String headerBase64 = base64UrlEncode(header.getBytes(&apos;UTF-8&apos;))
+    String payloadBase64 = base64UrlEncode(payload.getBytes(&apos;UTF-8&apos;))
+
+    // Create the signature
+    String dataToSign = &quot;${headerBase64}.${payloadBase64}&quot;
+    Signature signer = Signature.getInstance(&apos;SHA256withRSA&apos;)
+    signer.initSign(privateKey)
+    signer.update(dataToSign.getBytes(&apos;UTF-8&apos;))
+    byte[] signature = signer.sign()
+    String signatureBase64 = base64UrlEncode(signature)
+
+    // Return the JWT
+    return &quot;${headerBase64}.${payloadBase64}.${signatureBase64}&quot;
+}
+
+// Define your RSA private key as a Base64 encoded string (PKCS#8 format)
+def privateKeyBase64 = &apos;MIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQC1/GEVSMA7LDsk5LSydq54ZAigJ6NtBt1pKn1EWpRcofMcugRDe0dLGLE7kp2MvDMtY/dMBdZGjgTxkIw3eUttJ8010znTqi1eKM1wkoefazZYUjMwoXjfUTUrwI6rwqlpDoFZYdHwwBDflCTZMzpYkS3dS7FH9lQMdqgA2XZX3VhdgSG9ltDunvg1i+yaShlenomM1t4Dvc0KPCHn1qCy5cI/9mbUAiDVhqfs1HNnQNqlu4j2502/bfX/f8GrDQ7xKpDTQyFPptva6ybE3QXHCpvacHT/nUKxKARbQtktQOjm/GcuvOwLd35Kd3QnhoEQ7k904oTscQQInHhfkhoTAgMBAAECggEADbl7Xt4ONUg4K6ed4wmlTcoJhn6Gyi2m3AwKx3FnV/cUvRlgQfCVp1m04A/GFvuIhodP+qlECC0kvU0P7g0VPaWvSbxk04w1gLDmEXPTi5fL0OxeFPBQi9L1hhevCtAS86vW4HVKnnP1sc7b2o+M+mn0ggh31bwDia8XK306+hRERbjJ+o0yNf2YnU23KD4vEyYMIPl3xWJ+fUgU93KoIx0zktyMx4YMdaIt5mvK/NhLtwpn/RuyAwMCgjUe16Ji6HHZ6+sIY5h4hfHzwvQBym85Qh7SiFSoz6L3qxbhnFBMD44uiV5xhy0wXI6sdUiMLsYBKTGKir8FxRN+R3IJhQKBgQDgR1oKMHGmtxYdvli+Hg3N7gQzHNuvz0Znw37DJRQFoQ1sUYQYQo51A7X0A7hIL5/G6Em2S+phrDLOQ0/H9pZXhWgTUX8EP1MPqJ/Mv+g1MITVRHwBsysOpTk0YRfrCVcoy2Ef04RLN/kW3NowGR1mEi32bKEJwKSmofRYZMO7LQKBgQDPubG9EpZtq8zHJqqf15x9GDuxT8+iLtvVejHsZPpOvBsQjELut21NGhAf83wtQY8tuVizVK/YEj7vbAbmHOx4wcdkUfyokZc0GlcSmRqWS4WO/b/KzKgC+xW4lqpqNOgmuQA/5Sdv+gS764cYtJ9c91W61owh4ushcULfNmFyPwKBgCACzx0pMO+Erklsg6oPDBVaZYsOEWUUho4E3zDnN+ZdyFavg9Uams6kyvGbHlBfS8TOHsdAKqHqPA4omViHH4o6ZlJrjV+D0k0n2jcVJQWCeVMfRTvQ4NJkTrflK87GNISEEsbCH93EjW7v8sxuqT2KVrkXZBzKPDX0Y7XCHBW5An8ZJ2NegeG1ZhhmBUikEnfgrg6Mah26hfIY57Mj7RZicmTUnCd+wLd7nqxVMibXVBkCcG9NR/QDNjJoy6wKMXZxKQX8H/F4eCjXJllk5yVRDdQefJu88wtlUQJQV+5K7h0ukzh0hEtCRAROvTaex0CFAW5gMZrGf7P5WL3ASdWDAoGBAMNqXEPEhX4eMSUAAmPiaX7gxAxPd1ilVyOcTKwKEn+Tx33RcNcxzGJO0DHFs2Zt+Klqrb2gLxk8RPcSmmOn97kmzd8KgBg6dwCBynorjZLYNZoIliaBpmHtNA/YzM4LkfM8WRAycSuIdCiFtK7bW8rByEtCqSWFH+AkCGZ4vmNP&apos;
+
+// Decode the private key
+byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyBase64)
+PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privateKeyBytes)
+KeyFactory keyFactory = KeyFactory.getInstance(&apos;RSA&apos;)
+PrivateKey privateKey = keyFactory.generatePrivate(spec)
+
+// Define JWT header and payload as JSON strings
+String header = &apos;{&quot;alg&quot;:&quot;RS256&quot;,&quot;typ&quot;:&quot;JWT&quot;}&apos;
+String payload = &apos;{&quot;abc&quot;:&quot;123&quot;,&quot;def&quot;:&quot;234&quot;,&quot;efg&quot;:345,&quot;hij&quot;:&quot;456&quot;}&apos;
+
+// Create JWT
+String jwt = createJwt(header, payload, privateKey)
+
+// Output the JWT to JMeter log for debugging
+log.info(&quot;Encoded JWT: ${jwt}&quot;)
+
+// Optionally, store the JWT in a JMeter variable for use in other samplers
+vars.put(&quot;jwt_token&quot;, jwt)
+</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+        </hashTree>
+        <kg.apc.jmeter.samplers.DummySampler guiclass="kg.apc.jmeter.samplers.DummySamplerGui" testclass="kg.apc.jmeter.samplers.DummySampler" testname="JWT Decode" enabled="true">
+          <boolProp name="WAITING">true</boolProp>
+          <boolProp name="SUCCESFULL">true</boolProp>
+          <stringProp name="RESPONSE_CODE">200</stringProp>
+          <stringProp name="RESPONSE_MESSAGE">OK</stringProp>
+          <stringProp name="REQUEST_DATA">Dummy Sampler used to simulate requests and responses
+without actual network activity. This helps debugging tests.</stringProp>
+          <stringProp name="RESPONSE_DATA">${jwt_header}
+${jwt_payload}</stringProp>
+          <stringProp name="RESPONSE_TIME">${__Random(50,500)}</stringProp>
+          <stringProp name="LATENCY">${__Random(1,50)}</stringProp>
+          <stringProp name="CONNECT">${__Random(1,5)}</stringProp>
+          <stringProp name="URL"></stringProp>
+          <stringProp name="RESULT_CLASS">org.apache.jmeter.samplers.SampleResult</stringProp>
+        </kg.apc.jmeter.samplers.DummySampler>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="true">
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">
+
+import java.util.Base64
+
+// Helper function to perform Base64 URL decoding
+def base64UrlDecode(String input) {
+    // Base64 URL encoding replaces + with - and / with _
+    String base64 = input.replace(&apos;-&apos;, &apos;+&apos;).replace(&apos;_&apos;, &apos;/&apos;)
+    // Add padding if necessary
+    int padding = (4 - (base64.length() % 4)) % 4
+    base64 += &apos;=&apos; * padding
+    return Base64.getDecoder().decode(base64)
+}
+
+// Function to decode a JWT token
+def decodeJwt(String jwt) {
+    def parts = jwt.split(/[.]/)
+    //String[] parts = jwt.split(&apos;\\.&apos;);
+    if (parts.length != 3) {
+        throw new IllegalArgumentException(&quot;Invalid JWT token&quot;)
+    }
+    
+    String headerBase64 = parts[0]
+    String payloadBase64 = parts[1]
+    
+    // Decode Base64 URL encoded header and payload
+    String headerJson = new String(base64UrlDecode(headerBase64), &apos;UTF-8&apos;)
+    String payloadJson = new String(base64UrlDecode(payloadBase64), &apos;UTF-8&apos;)
+    
+    return [header: headerJson, payload: payloadJson]
+}
+
+// Example JWT token (replace with your JWT token)
+def jwtToken = vars.get(&apos;jwt_token&apos;)
+
+// Decode the JWT token
+def decodedJwt = decodeJwt(jwtToken)
+
+// Output the decoded JWT to JMeter log for debugging
+log.info(&quot;Decoded JWT Header: ${decodedJwt.header}&quot;)
+log.info(&quot;Decoded JWT Payload: ${decodedJwt.payload}&quot;)
+
+// Optionally, store the decoded JWT components in JMeter variables for use in other samplers
+vars.put(&quot;jwt_header&quot;, decodedJwt.header)
+vars.put(&quot;jwt_payload&quot;, decodedJwt.payload)
+</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+        </hashTree>
+        <DebugSampler guiclass="TestBeanGUI" testclass="DebugSampler" testname="Debug Sampler" enabled="false">
+          <boolProp name="displayJMeterProperties">false</boolProp>
+          <boolProp name="displayJMeterVariables">true</boolProp>
+          <boolProp name="displaySystemProperties">false</boolProp>
+        </DebugSampler>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
